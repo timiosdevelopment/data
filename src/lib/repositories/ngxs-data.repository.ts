@@ -1,11 +1,11 @@
-import { ActionType } from '@ngxs/store';
 import { isDevMode } from '@angular/core';
+import { ActionType } from '@ngxs/store';
 import { Observable } from 'rxjs';
 
 import { action } from '../decorators/action/action';
-import { ngxsDeepFreeze } from '../utils/internals/freeze';
-import { NGXS_DATA_EXCEPTIONS } from '../interfaces/internal.interface';
 import { DataRepository, Immutable, ImmutableStateContext, StateValue } from '../interfaces/external.interface';
+import { NGXS_DATA_EXCEPTIONS } from '../interfaces/internal.interface';
+import { ngxsDeepFreeze } from '../utils/internals/freeze';
 
 export abstract class NgxsDataRepository<T> implements ImmutableStateContext<T>, DataRepository<T> {
     public readonly name: string;
@@ -20,10 +20,12 @@ export abstract class NgxsDataRepository<T> implements ImmutableStateContext<T>,
             throw new Error(NGXS_DATA_EXCEPTIONS.NGXS_DATA_STATE_DECORATOR);
         }
 
+        const self = this;
+
         return {
             ...context,
             getState(): Immutable<T> {
-                return isDevMode() ? ngxsDeepFreeze(context.getState()) : context.getState();
+                return isDevMode() ? self.freezeState(context.getState()) : context.getState();
             },
             setState(val: StateValue<T>): void {
                 context.setState(val);
@@ -32,6 +34,10 @@ export abstract class NgxsDataRepository<T> implements ImmutableStateContext<T>,
                 context.patchState(val);
             }
         };
+    }
+
+    public freezeState(state: Immutable<T>): Immutable<T> {
+        return ngxsDeepFreeze(state);
     }
 
     public getState(): Immutable<T> {

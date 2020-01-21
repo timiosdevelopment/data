@@ -127,6 +127,8 @@ export interface ImmutableStateContext<T> {
     patchState(val: DataPatchValue<T>): void;
 
     dispatch(actions: ActionType | ActionType[]): Observable<void>;
+
+    freezeState(state: Immutable<T>): Immutable<T>;
 }
 
 /**

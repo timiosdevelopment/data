@@ -1,12 +1,12 @@
-import { StateClass } from '@ngxs/store/internals';
-import { map, shareReplay } from 'rxjs/operators';
 import { isDevMode } from '@angular/core';
+import { StateClass } from '@ngxs/store/internals';
 import { Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 
+import { NgxsRepositoryMeta } from '../../../interfaces/external.interface';
 import { Any, NGXS_DATA_EXCEPTIONS } from '../../../interfaces/internal.interface';
 import { NgxsDataAccessor } from '../../../services/ngxs-data-accessor';
 import { getRepository } from '../../../utils/internals/ensure-repository';
-import { NgxsRepositoryMeta } from '../../../interfaces/external.interface';
 import { ngxsDeepFreeze } from '../../../utils/internals/freeze';
 
 export function createStateSelector<T>(stateClass: StateClass): void {
@@ -33,7 +33,17 @@ export function createStateSelector<T>(stateClass: StateClass): void {
                     return (
                         this[selectorId] ||
                         (this[selectorId] = NgxsDataAccessor.store.select(stateClass as Any).pipe(
-                            map((state) => (isDevMode() ? ngxsDeepFreeze(state) : state)),
+                            map((state) => {
+                                // freezing the some or all of the state
+                                const freezeFn = this['freezeState'];
+                                if (isDevMode() && typeof freezeFn === 'function') {
+                                    return freezeFn(state);
+                                } else if (isDevMode()) {
+                                    return ngxsDeepFreeze(state);
+                                }
+
+                                return state;
+                            }),
                             shareReplay({ refCount: true, bufferSize: 1 })
                         ))
                     );
